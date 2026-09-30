@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>말랑말랑 영단어 모험 - 어린이 단어 학습</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Nunito', 'Jua', sans-serif;
+            background-color: #F0FDF4;
+        }
+
+        /* 3D Flashcard Flip Effect */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Soft Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Pulse Bounce Animation for Success */
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .animate-celebrate {
+            animation: celebrate 0.5s ease-in-out 2;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 sm:p-6 text-gray-800">
+
+    <!-- Header -->
+    <header class="w-full max-w-xl text-center my-3">
+        <div class="inline-block bg-white px-6 py-2 rounded-full shadow-md border-2 border-emerald-300 animate-float">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-emerald-600 flex items-center justify-center gap-2">
+                <span>✨</span> 말랑말랑 영단어 모험 <span>🚀</span>
+            </h1>
+        </div>
+        <p class="text-sm sm:text-base text-emerald-700 font-bold mt-2">오늘의 동물 & 자연 단어를 배워보아요!</p>
+    </header>
+
+    <!-- Mode Switcher Tabs -->
+    <div class="w-full max-w-md bg-emerald-100/80 p-1.5 rounded-2xl flex gap-2 shadow-inner mb-4">
+        <button id="cardModeBtn" onclick="switchMode('card')" 
+            class="flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 bg-white text-emerald-600 shadow-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-layer-group"></i> 1. 카드 학습
+        </button>
+        <button id="quizModeBtn" onclick="switchMode('quiz')" 
+            class="flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 text-emerald-700 hover:text-emerald-900 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gamepad"></i> 2. 단어 퀴즈
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center">
+
+        <!-- 1. Flashcard Mode View -->
+        <div id="cardView" class="w-full flex flex-col items-center">
+            <!-- Progress Bar -->
+            <div class="w-full mb-3 flex items-center justify-between text-xs sm:text-sm font-bold text-emerald-700 px-1">
+                <span id="cardProgressText">카드 1 / 10</span>
+                <span id="cardCategoryBadge" class="bg-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-full">🌱 기초 단어</span>
+            </div>
+            <div class="w-full bg-emerald-200 h-3 rounded-full overflow-hidden mb-5">
+                <div id="cardProgressBar" class="bg-emerald-500 h-full w-10 transition-all duration-300 rounded-full"></div>
+            </div>
+
+            <!-- Flashcard Container (Flip Interaction) -->
+            <div class="w-full h-80 perspective-1000 cursor-pointer group" onclick="flipCard()">
+                <div id="flashcard" class="w-full h-full relative transform-style-3d transition-transform duration-500 shadow-xl rounded-3xl border-4 border-emerald-200 bg-white">
+                    
+                    <!-- Front Side (English) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rounded-3xl p-6 flex flex-col items-center justify-between bg-gradient-to-b from-white to-emerald-50/50">
+                        <div class="w-full flex justify-end">
+                            <button onclick="event.stopPropagation(); speakCurrentWord()" 
+                                class="w-12 h-12 bg-amber-100 hover:bg-amber-200 text-amber-600 rounded-2xl flex items-center justify-center shadow-md transition-transform active:scale-95" 
+                                title="발음 듣기">
+                                <i class="fa-solid fa-volume-high text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="text-center my-auto">
+                            <span id="cardEmoji" class="text-7xl block mb-2 animate-bounce">🐶</span>
+                            <h2 id="cardEnglish" class="text-4xl font-black text-gray-800 tracking-wide">Dog</h2>
+                        </div>
+                        <p class="text-xs text-gray-400 font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-hand-pointer"></i> 카드를 터치하여 뜻 확인하기
+                        </p>
+                    </div>
+
+                    <!-- Back Side (Korean & Example) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-6 flex flex-col items-center justify-between bg-gradient-to-b from-emerald-500 to-teal-600 text-white">
+                        <div class="w-full flex justify-between items-center text-emerald-100 text-xs font-bold">
+                            <span>한국어 뜻</span>
+                            <button onclick="event.stopPropagation(); speakCurrentWord()" class="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center text-white">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                        <div class="text-center my-auto">
+                            <h3 id="cardKorean" class="text-4xl font-black mb-3">강아지</h3>
+                            <div class="bg-white/15 px-4 py-2 rounded-2xl backdrop-blur-sm border border-white/20">
+                                <p id="cardExample" class="text-sm font-semibold text-emerald-50">"The dog plays in the yard."</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-emerald-200 font-bold">
+                            다시 터치하면 앞면으로 돌아갑니다
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Card Navigation Buttons -->
+            <div class="flex w-full justify-between gap-4 mt-6">
+                <button onclick="prevCard()" class="flex-1 py-3.5 bg-white border-2 border-emerald-300 text-emerald-700 font-extrabold rounded-2xl shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> 이전 단어
+                </button>
+                <button onclick="nextCard()" class="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                    다음 단어 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Quiz Mode View -->
+        <div id="quizView" class="w-full flex-col items-center hidden">
+            <!-- Quiz Header & Score -->
+            <div class="w-full mb-3 flex items-center justify-between text-xs sm:text-sm font-bold text-emerald-700 px-1">
+                <span id="quizProgressText">문제 1 / 10</span>
+                <span id="quizScoreText" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-extrabold">⭐ 점수: 0</span>
+            </div>
+            <div class="w-full bg-emerald-200 h-3 rounded-full overflow-hidden mb-5">
+                <div id="quizProgressBar" class="bg-amber-400 h-full w-10 transition-all duration-300 rounded-full"></div>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="w-full bg-white rounded-3xl border-4 border-amber-200 shadow-xl p-6 mb-5 text-center flex flex-col items-center">
+                <div class="flex justify-between w-full items-center mb-2">
+                    <span class="text-xs font-extrabold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">뜻에 맞는 영단어를 맞춰보세요!</span>
+                    <button onclick="speakQuizWord()" class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shadow hover:bg-amber-200">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                
+                <span id="quizEmoji" class="text-6xl my-2">🐱</span>
+                <h2 id="quizQuestionText" class="text-3xl font-black text-gray-800 mb-1">고양이</h2>
+            </div>
+
+            <!-- Options (4 Choices) -->
+            <div id="quizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+
+            <!-- Quiz Feedback Overlay / Message -->
+            <div id="quizFeedback" class="mt-4 text-center h-8 font-black text-lg transition-all"></div>
+        </div>
+
+        <!-- 3. Quiz Result View -->
+        <div id="resultView" class="w-full flex-col items-center text-center hidden bg-white rounded-3xl border-4 border-emerald-300 p-8 shadow-xl">
+            <div class="text-6xl mb-3 animate-bounce" id="resultEmoji">🏆</div>
+            <h2 class="text-3xl font-black text-gray-800 mb-2">학습 완료!</h2>
+            <p class="text-gray-600 font-bold mb-6">참 잘했어요! 오늘 공부를 훌륭하게 마쳤습니다.</p>
+
+            <div class="bg-emerald-50 rounded-2xl p-4 w-full mb-6 border border-emerald-200">
+                <div class="text-emerald-800 text-sm font-bold mb-1">최종 점수</div>
+                <div id="finalScore" class="text-4xl font-black text-emerald-600">100점</div>
+            </div>
+
+            <div class="flex flex-col gap-3 w-full">
+                <button onclick="restartQuiz()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl shadow-md active:scale-95 transition-all text-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 다시 도전하기
+                </button>
+                <button onclick="switchMode('card')" class="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-book"></i> 단어 카드로 돌아가기
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-xs text-emerald-600 font-semibold">
+        <p>어린이를 위한 5분 기초 영단어 앱 🎈 ONE index.html App</p>
+    </footer>
+
+    <script>
+        // Vocabulary Dataset (Child-friendly, basic words)
+        const vocabulary = [
+            { english: "Dog", korean: "강아지", emoji: "🐶", example: "The dog wags its tail." },
+            { english: "Cat", korean: "고양이", emoji: "🐱", example: "The cat says meow." },
+            { english: "Apple", korean: "사과", emoji: "🍎", example: "I eat a sweet red apple." },
+            { english: "Sun", korean: "태양", emoji: "☀️", example: "The sun is shining bright." },
+            { english: "Tree", korean: "나무", emoji: "🌳", example: "Birds sit on the green tree." },
+            { english: "Bird", korean: "새", emoji: "🐦", example: "The blue bird can fly high." },
+            { english: "Fish", korean: "물고기", emoji: "🐟", example: "Fish swim in the water." },
+            { english: "Book", korean: "책", emoji: "📚", example: "I read a fun story book." },
+            { english: "Star", korean: "별", emoji: "⭐", example: "Twinkle twinkle little star." },
+            { english: "Flower", korean: "꽃", emoji: "🌸", example: "The pink flower smells nice." }
+        ];
+
+        // App State
+        let currentCardIndex = 0;
+        let isCardFlipped = false;
+        
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+        let isQuizAnswering = false;
+        let shuffledQuizList = [];
+
+        // TTS Speech Synthesis Engine
+        function speakWord(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel previous speech if playing
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85; // Slightly slower speed for children
+                utterance.pitch = 1.1;  // Slightly higher friendly pitch
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentWord() {
+            speakWord(vocabulary[currentCardIndex].english);
+        }
+
+        function speakQuizWord() {
+            speakWord(shuffledQuizList[currentQuizIndex].english);
+        }
+
+        // Mode Switching System (Cards vs Quiz)
+        function switchMode(mode) {
+            const cardModeBtn = document.getElementById('cardModeBtn');
+            const quizModeBtn = document.getElementById('quizModeBtn');
+            const cardView = document.getElementById('cardView');
+            const quizView = document.getElementById('quizView');
+            const resultView = document.getElementById('resultView');
+
+            if (mode === 'card') {
+                cardModeBtn.className = "flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 bg-white text-emerald-600 shadow-sm flex items-center justify-center gap-2";
+                quizModeBtn.className = "flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 text-emerald-700 hover:text-emerald-900 flex items-center justify-center gap-2";
+                
+                cardView.classList.remove('hidden');
+                quizView.classList.add('hidden');
+                resultView.classList.add('hidden');
+                
+                renderCard();
+            } else {
+                quizModeBtn.className = "flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 bg-white text-amber-600 shadow-sm flex items-center justify-center gap-2";
+                cardModeBtn.className = "flex-1 py-3 rounded-xl font-extrabold text-base transition-all duration-300 text-emerald-700 hover:text-emerald-900 flex items-center justify-center gap-2";
+                
+                cardView.classList.add('hidden');
+                quizView.classList.remove('hidden');
+                resultView.classList.add('hidden');
+                
+                restartQuiz();
+            }
+        }
+
+        // Flashcard Rendering & Navigation
+        function renderCard() {
+            const word = vocabulary[currentCardIndex];
+            const cardElement = document.getElementById('flashcard');
+
+            // Reset Card Flip State when loading new word
+            if (isCardFlipped) {
+                cardElement.classList.remove('rotate-y-180');
+                isCardFlipped = false;
+            }
+
+            // Update DOM Content
+            document.getElementById('cardEmoji').textContent = word.emoji;
+            document.getElementById('cardEnglish').textContent = word.english;
+            document.getElementById('cardKorean').textContent = word.korean;
+            document.getElementById('cardExample').textContent = `"${word.example}"`;
+
+            // Progress Update
+            const progressPercent = ((currentCardIndex + 1) / vocabulary.length) * 100;
+            document.getElementById('cardProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('cardProgressText').textContent = `카드 ${currentCardIndex + 1} / ${vocabulary.length}`;
+
+            // Auto read English word
+            setTimeout(() => speakCurrentWord(), 300);
+        }
+
+        function flipCard() {
+            const cardElement = document.getElementById('flashcard');
+            isCardFlipped = !isCardFlipped;
+            if (isCardFlipped) {
+                cardElement.classList.add('rotate-y-180');
+            } else {
+                cardElement.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % vocabulary.length;
+            renderCard();
+        }
+
+        function prevCard() {
+            currentCardIndex = (currentCardIndex - 1 + vocabulary.length) % vocabulary.length;
+            renderCard();
+        }
+
+        // Quiz System Methods
+        function restartQuiz() {
+            // Shuffle vocabulary list for quiz
+            shuffledQuizList = [...vocabulary].sort(() => Math.random() - 0.5);
+            currentQuizIndex = 0;
+            quizScore = 0;
+            isQuizAnswering = false;
+
+            document.getElementById('quizView').classList.remove('hidden');
+            document.getElementById('resultView').classList.add('hidden');
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            if (currentQuizIndex >= shuffledQuizList.length) {
+                showQuizResult();
+                return;
+            }
+
+            const currentItem = shuffledQuizList[currentQuizIndex];
+            isQuizAnswering = false;
+
+            // DOM Updates
+            document.getElementById('quizEmoji').textContent = currentItem.emoji;
+            document.getElementById('quizQuestionText').textContent = currentItem.korean;
+            document.getElementById('quizScoreText').textContent = `⭐ 점수: ${quizScore}`;
+            
+            // Progress Bar Update
+            const progressPercent = ((currentQuizIndex + 1) / shuffledQuizList.length) * 100;
+            document.getElementById('quizProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('quizProgressText').textContent = `문제 ${currentQuizIndex + 1} / ${shuffledQuizList.length}`;
+            
+            // Feedback text clear
+            const feedbackEl = document.getElementById('quizFeedback');
+            feedbackEl.textContent = '';
+            feedbackEl.className = "mt-4 text-center h-8 font-black text-lg transition-all";
+
+            // Generate 4 Multiple Choice Options
+            const options = generateOptions(currentItem.english);
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+
+            options.forEach((opt) => {
+                const button = document.createElement('button');
+                button.className = "w-full py-4 px-4 bg-white hover:bg-amber-50 border-2 border-gray-200 hover:border-amber-400 text-gray-800 font-extrabold text-xl rounded-2xl shadow-sm transition-all flex items-center justify-center active:scale-95";
+                button.textContent = opt;
+                button.onclick = () => handleAnswer(opt, currentItem.english, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Helper to get 4 random options containing the correct answer
+        function generateOptions(correctAnswer) {
+            const opts = new Set([correctAnswer]);
+            while (opts.size < 4) {
+                const randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)].english;
+                opts.add(randomWord);
+            }
+            return Array.from(opts).sort(() => Math.random() - 0.5);
+        }
+
+        function handleAnswer(selectedOption, correctAnswer, clickedBtn) {
+            if (isQuizAnswering) return; // Prevent multiple clicks
+            isQuizAnswering = true;
+
+            const feedbackEl = document.getElementById('quizFeedback');
+            const allOptionBtns = document.getElementById('quizOptions').children;
+
+            // Pronounce selected word
+            speakWord(selectedOption);
+
+            if (selectedOption === correctAnswer) {
+                // Correct Answer Logic
+                quizScore += 10;
+                clickedBtn.className = "w-full py-4 px-4 bg-emerald-500 border-2 border-emerald-600 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center animate-celebrate";
+                feedbackEl.textContent = "🎉 정답이에요! 참 잘했어요!";
+                feedbackEl.classList.add('text-emerald-600');
+            } else {
+                // Incorrect Answer Logic
+                clickedBtn.className = "w-full py-4 px-4 bg-rose-500 border-2 border-rose-600 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center";
+                feedbackEl.textContent = `❌ 아쉽네요! 정답은 '${correctAnswer}' 입니다.`;
+                feedbackEl.classList.add('text-rose-500');
+
+                // Highlight correct button
+                Array.from(allOptionBtns).forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.className = "w-full py-4 px-4 bg-emerald-100 border-2 border-emerald-500 text-emerald-800 font-extrabold text-xl rounded-2xl shadow-sm flex items-center justify-center";
+                    }
+                });
+            }
+
+            // Move to next question after short delay
+            setTimeout(() => {
+                currentQuizIndex++;
+                renderQuizQuestion();
+            }, 1600);
+        }
+
+        function showQuizResult() {
+            document.getElementById('quizView').classList.add('hidden');
+            const resultView = document.getElementById('resultView');
+            resultView.classList.remove('hidden');
+
+            const scoreDisplay = document.getElementById('finalScore');
+            const emojiDisplay = document.getElementById('resultEmoji');
+            scoreDisplay.textContent = `${quizScore}점`;
+
+            if (quizScore >= 80) {
+                emojiDisplay.textContent = "🏆";
+                speakWord("Congratulations! Excellent job!");
+            } else if (quizScore >= 50) {
+                emojiDisplay.textContent = "🌟";
+                speakWord("Good job! Keep learning!");
+            } else {
+                emojiDisplay.textContent = "🎈";
+                speakWord("Try again! You can do it!");
+            }
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            renderCard();
+        };
+    </script>
+</body>
+</html>
